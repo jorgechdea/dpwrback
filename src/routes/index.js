@@ -1,5 +1,6 @@
 const { Router } = require("express");
 const axios = require("axios");
+const { Sequelize } = require("sequelize");
 const { UserInfo, Restaurants, Categories, Evaluations } = require("..//db");
 require("dotenv").config();
 
@@ -105,6 +106,30 @@ router.get("/evaluations/:id", async (req, res) => {
   } catch (error) {
     console.log(error);
     res.status(400).json(error);
+  }
+});
+
+router.get("/score/:restaurantId", async (req, res) => {
+  const restaurantId = req.params.restaurantId;
+
+  try {
+    const promedio = await Evaluations.findAll({
+      attributes: [[Sequelize.fn("AVG", Sequelize.col("score")), "score"]],
+      where: {
+        restaurantId: restaurantId,
+      },
+    });
+
+    if (promedio) {
+      res.json(promedio);
+    } else {
+      res.status(404).json({ error: "Restaurante no encontrado" });
+    }
+  } catch (error) {
+    console.error("Error al obtener el promedio de las evaluaciones:", error);
+    res
+      .status(500)
+      .json({ error: "Error al obtener el promedio de las evaluaciones" });
   }
 });
 
